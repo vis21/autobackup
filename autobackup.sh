@@ -45,8 +45,13 @@ compress_backups() {
     done
 }
 
+cleanup() {
+    find "$archiveDir" -name "*.tar.gz" -type f -mtime +14 -exec rm {} \;
+}
+
 for dir in "${sourceDirs[@]}"; do
     backup "$dir" "$destDir"
 done
 
 compress_backups
+cleanup
