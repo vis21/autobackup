@@ -2,6 +2,9 @@
 # Author: vis21
 # Version: 1.0
 
+# Get current date
+curDate=$(date +"%Y-%m-%d_%H:%M:%S")
+
 # Define variables for origin and destination directories
 sourceDirs=("/var/www" "/etc/nginx")
 destDir="/home/backups"
@@ -25,7 +28,7 @@ fi
 backup() {
     for dir in "${sourceDirs[@]}"; do
         echo "Copying source directory $dir to destination directory $destDir"
-        if cp -r "$dir/" "$destDir"; then
+        if cp -r "$dir/" "$destDir/$(basename "$dir")_${curDate}"; then
             echo "Successfully backed up $dir"
         else
             echo "Failed to back up $dir"
@@ -36,7 +39,7 @@ backup() {
 # Compress backups taken more than 7 days ago
 compress_backups() {
     echo "Checking for backups older than 7 days..."
-    if [ -z "$(find "$destDir" -mindepth 1 -maxdepth 1 -type d -mtime +1)" ]; then
+    if [ -z "$(find "$destDir" -mindepth 1 -maxdepth 1 -type d -mtime +0)" ]; then
         echo "No backups available for compression"
     else
         echo "Compressing backups older than 7 days..."
@@ -45,7 +48,7 @@ compress_backups() {
             echo "Compressing $dir to $archiveName"
             if tar -czf "$archiveName" -C "$destDir" "$(basename "$dir")"; then
                 echo "Successfully compressed $dir"
-                rm -rf "$dir"
+                #rm -rf "$dir"
             else
                 echo "Failed to compress $dir"
             fi
@@ -54,7 +57,7 @@ compress_backups() {
 }
 
 cleanup() {
-    find "$archiveDir" -name "*.tar.gz" -type f -mtime +2 -exec rm {} \;
+    find "$archiveDir" -name "*.tar.gz" -type f -mtime +1 -exec rm {} \;
 }
 
 backup
