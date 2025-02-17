@@ -36,19 +36,21 @@ backup() {
     done
 }
 
-# Compress backups taken more than 7 days ago
+# Compress old backups
 compress_backups() {
-    echo "Checking for backups older than 7 days..."
-    if [ -z "$(find "$destDir" -mindepth 1 -maxdepth 1 -type d -mtime +0)" ]; then
+    oldBackups=$(find "$destDir" -mindepth 1 -maxdepth 1 -type d -mtime +7)
+    echo "Checking for older backups..."
+    if [ -z "$oldBackups" ]; then
         echo "No backups available for compression"
     else
-        echo "Compressing backups older than 7 days..."
-        while read -r dir; do
+        echo "Compressing older backups..."
+        echo "$oldBackups" | while read -r dir; do
             archiveName="$archiveDir/$(basename "$dir").tar.gz"
             echo "Compressing $dir to $archiveName"
             if tar -czf "$archiveName" -C "$destDir" "$(basename "$dir")"; then
                 echo "Successfully compressed $dir"
-                #rm -rf "$dir"
+                rm -rf "$dir"
+                echo "Successfully removed $dir"
             else
                 echo "Failed to compress $dir"
             fi
@@ -56,8 +58,18 @@ compress_backups() {
     fi
 }
 
+# Clean up old archives
 cleanup() {
-    find "$archiveDir" -name "*.tar.gz" -type f -mtime +1 -exec rm {} \;
+    echo "Checking for older archives..."
+    oldArchives=$(find "$archiveDir" -name "*.tar.gz" -type f -mtime +14)
+    if [ -z "$oldArchives" ]; then
+        echo "No archives available for deletion"
+    else
+        echo "Deleting the old archives:"
+        echo "$oldArchives"
+        rm -rf $oldArchives
+        echo "Successfully deleted old archives"
+    fi
 }
 
 backup
